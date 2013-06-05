@@ -1,0 +1,34 @@
+Project Owner(s):Samuel Walsh
+Author(s):Samuel Walsh
+Hardware Platform:PIC18F8722 and PIC18F4520 10MHz OSC, NO PLL.
+Debuggers Used: ICD3
+Programmers Used:ICD3
+MPLAB Version:MPLAB X IDE 1.80
+C Compiler Version:C18 but should work with XC8
+
+FILES INCLUDED IN THE PROJECT TREE:
+
+system.h - 
+
+user.h - 
+
+configuration_bits.c - Contains device configuration bit macros.  Refer to
+the comments in configuration_bits.c for instructions on where to get
+information about device configuration bits and their corresponding macros.
+
+interrupts.c - 
+
+main.c - 
+
+system.c - 
+
+user.c - 
+
+FILES INCLUDED IN THE PROJECT BUT NOT IN THE PROJECT TREE:
+
+#include <htc.h>             /* Global Header File */
+#include <stdint.h>          /* For uint8_t definition */
+#include <stdbool.h>         /* For true/false definition */
+
+These files come with the HiTech compiler.  Check the compiler documentation for
+more information on these files.

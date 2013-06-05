@@ -1,0 +1,10 @@
+_readRegRespond: CODE, 574 0 26
+_main: CODE, 620 0 16
+_high_isr: CODE, 8 0 300
+__initialization: CODE, 600 0 14
+_baud1USART: CODE, 636 0 6
+_Read1USART: CODE, 518 0 56
+_ConfigureUSART: CODE, 448 0 70
+_Open1USART: CODE, 308 0 140
+_low_isr: CODE, 24 0 138
+Total: 766
