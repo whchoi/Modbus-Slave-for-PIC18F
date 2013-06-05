@@ -15,7 +15,7 @@ IF USING 18F4520 or 18F8722
   in here and you are ready to go.
 
   From here you can start coding away in "main.c" and start adding your
-  own functions to "user.c".. all you need to do is equate a holdinReg
+  own functions to "user.c".. all you need to do is equate a holdingReg
   or a coil to something.
 
   For example

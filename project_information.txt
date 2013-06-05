@@ -8,21 +8,23 @@ C Compiler Version:C18 but should work with XC8
 
 FILES INCLUDED IN THE PROJECT TREE:
 
-system.h - 
+system.h - All configuration goes in here
 
-user.h - 
+user.h -   Custom user function prototypes in here
 
 configuration_bits.c - Contains device configuration bit macros.  Refer to
 the comments in configuration_bits.c for instructions on where to get
 information about device configuration bits and their corresponding macros.
 
-interrupts.c - 
+interrupts.c - Contains modbus interrupts but also will contain user interrupts
 
-main.c - 
+main.c - Main source file.. 
 
-system.c - 
+system.c - Contains communication code and specific modbus functions needed
 
-user.c - 
+user.c - Where the user can put their own custom code.
+
+modbus.c- Modbus specific functions
 
 FILES INCLUDED IN THE PROJECT BUT NOT IN THE PROJECT TREE:
 
