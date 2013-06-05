@@ -4,6 +4,7 @@ ___  ___          _ _                 _____ _
 | |\/| |/ _ \ / _` | '_ \| | | / __|  `--. \ |/ _` \ \ / / _ \
 | |  | | (_) | (_| | |_) | |_| \__ \ /\__/ / | (_| |\ V /  __/
 \_|  |_/\___/ \__,_|_.__/ \__,_|___/ \____/|_|\__,_| \_/ \___|
+===============================================================
 
 
 This project contains the code to get ANY PIC18F series Microcontroller
@@ -13,6 +14,7 @@ The project is ready to go for either the PIC18F8722 or the PIC18F4520
 but with some simple changes can work with any other device.
 
 IF USING 18F4520 or 18F8722
+-----------------------------------------------------------------------
   To get started make the relevant changes to "System.h"
   All you need to do is define your processor, frequency, baudrate etc
   in here and you are ready to go.
@@ -23,22 +25,22 @@ IF USING 18F4520 or 18F8722
 
   For example
 
-  void main(void)
-  {
-    OpnUSART();
-    ConfigInterrupts();
+    void main(void)
+    {
+      OpnUSART();
+      ConfigInterrupts();
 
-    while(1){
-      if(modbusMessage){
-        decodeIt();}
+      while(1){
+        if(modbusMessage){
+          decodeIt();}
 
-        //Start code here...
+          //Start code here...
 
-        TRISD,TRISC = 0;
-        LATD = holdingReg[0];
-        LATCbits.LATC1 = coils[0];
-      }
-  }
+          TRISD,TRISC = 0;
+          LATD = holdingReg[0];
+          LATCbits.LATC1 = coils[0];
+        }
+    }
 
   This code would output whatever is in holdingReg[0] to LATD and whatever
   is in coils[0] to LATC1.. it is that easy..
@@ -47,6 +49,7 @@ IF USING 18F4520 or 18F8722
   but that is up to you.. all of the communication code is taken care for you.
 
 IF USING ANOTHER PROCESSOR
+---------------------------------------------------------------------------------
   There are some things you are going to need to change.. as you can see in
   system.h at the bottom there are some #ifdef's defined for the 2 choices
   of processor.
