@@ -6,12 +6,12 @@
 
 /* Microcontroller MIPs (FCY) */
 #define p18f4520         //either write p18f4520 or p18f8722 or your own if added.
-#define SYS_FREQ         10000000L
+#define SYS_FREQ         10000000L  //ONLY 10MHz confirmed working.. have a go
 #define FCY              SYS_FREQ/4
-#define Timer0High       0xF5 // for 8MHz 0xF7 or for 10MHz 0xF5
-#define Timer0Low        0xD7 // for 8MHz 0xDF or for 10MHz 0xD7
+#define Timer0High       0xF5 // 4MHz:0xFB, 8MHz:0xF7, 10MHz:0xF5
+#define Timer0Low        0xD7 // 4MHz:0xEF, 8MHz:0xDF, 10MHz:0xD7
 #define BAUD_RATE        9600
-#define SlaveAddress     1 // Change this to whatever you want..
+#define SlaveAddress     2 // Change this to whatever you want..
 #define writeEnable      LATCbits.LATC1        //this is RO/RE
 #define writeEnConf      TRISCbits.TRISC1       //to config RO/RE as output
 
