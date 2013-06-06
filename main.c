@@ -33,6 +33,8 @@ extern volatile char modbusMessage;
 /* Main Program                                                               */
 /******************************************************************************/
 
+//SAM NOT RECEIVING ANYTHING FROM TONYS GADGET..
+
 void main(void)
 {
   OpnUSART();
@@ -43,10 +45,6 @@ void main(void)
       decodeIt();}
 
       //Start code here... below is just an example
-
-      TRISD,TRISC = 0;
-      LATD = holdingReg[0];
-      LATCbits.LATC1 = coils[0];
     }
 
 }

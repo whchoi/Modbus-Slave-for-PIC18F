@@ -5,13 +5,15 @@
 /* TODO Change all these values for your project */
 
 /* Microcontroller MIPs (FCY) */
-#define p18f8722         //only other option is p18f8722 atm..
+#define p18f4520         //either write p18f4520 or p18f8722 or your own if added.
 #define SYS_FREQ         10000000L
 #define FCY              SYS_FREQ/4
-#define Timer0High       0xF5; // for 8MHz 0xF7
-#define Timer0Low        0xD7; // for 8MHz 0xDF
-#define BAUD_RATE        9600;
+#define Timer0High       0xF5 // for 8MHz 0xF7 or for 10MHz 0xF5
+#define Timer0Low        0xD7 // for 8MHz 0xDF or for 10MHz 0xD7
+#define BAUD_RATE        9600
 #define SlaveAddress     1 // Change this to whatever you want..
+#define writeEnable      LATCbits.LATC1        //this is RO/RE
+#define writeEnConf      TRISCbits.TRISC1       //to config RO/RE as output
 
 //CHANGE THESE FOR EACH PROCESSOR
 #ifdef p18f4520

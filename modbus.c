@@ -20,7 +20,6 @@
 #include "modbus.h"
 #include <usart.h>
 #include "system.h"
-
 /******************************************************************************/
 /* Global variables                                                           */
 /******************************************************************************/
@@ -50,22 +49,29 @@ void clearResponse(void)
 void decodeIt(void)
 {
   if(received[0] == SlaveAddress){
-    if((received[1]!=0x03)&&(received[1]!=0x06)&&(received[1]!=0x01)
-    &&(received[1]!=0x05)){
-      response[0] = 0; //error occurred
+    if(checkCRC()){
+      if(received[1] == 0x01){
+        readCoil();
+      }
+      else if(received[1] == 0x02){
+        readInputCoil();
+      }
+      else if(received[1] == 0x03){
+        readReg();
+      }
+      else if(received[1] == 0x04){
+        readInputReg();
+      }
+      else if(received[1] == 0x05){
+        writeCoil();
+      }	  
+      else if(received[1] == 0x06){
+        writeReg();
+      }
+      else{
+        response[0] = 0; //error this does nothing though..
+      }
     }
-    if(received[1] == 0x01){
-      readCoil();
-	  }	
-	  if(received[1] == 0x05){
-      writeCoil();
-	  }	  
-	  if(received[1] == 0x03){
-      readReg();
-	  }	
-	  if(received[1] == 0x06){
-      writeReg();
-	  }
   }
   modbusMessage = 0;
 }
@@ -113,10 +119,66 @@ void readReg(void)
   response[j] = crc;
   j+=2;
 
+  writeEnable = 1;
   for(i=0;i!=j;i++){
    while(busyUsart); //Change this to Busy1USART for double USART PIC's
      TransmitBuffer = response[i];
   }
+  writeEnable = 0;
+  j=0;
+
+  clearResponse();
+}
+
+void readInputReg(void)
+{
+  unsigned int rr_Address = 0;
+  unsigned int rr_numRegs = 0;
+  unsigned char j = 3;
+  unsigned int crc = 0;
+  unsigned int i = 0;
+
+  //Combine address bytes
+  rr_Address = received[2];
+  rr_Address <<= 8;
+  rr_Address |= received[3];
+
+  //Combine number of regs bytes
+  rr_numRegs = received[4];
+  rr_numRegs <<= 8;
+  rr_numRegs |= received[5];
+
+  response[0] = SlaveAddress;
+  response[1] = 0x04;
+  response[2] = rr_numRegs*2; //2 bytes per reg
+
+  for(i=rr_Address;i<(rr_Address + rr_numRegs);i++){
+    if(holdingReg[i] > 255){
+      //Need to split it up into 2 bytes
+      response[j] = holdingReg[i] >> 8;
+      j++;
+      response[j] = holdingReg[i];
+      j++;
+    }
+    else{
+      response[j] = 0x00;
+      j++;
+      response[j] = holdingReg[i];
+      j++;
+    }
+  }
+  crc = generateCRC(j+2);
+  response[j] = crc >> 8;
+  j++;
+  response[j] = crc;
+  j+=2;
+
+  writeEnable = 1;
+  for(i=0;i!=j;i++){
+   while(busyUsart); //Change this to Busy1USART for double USART PIC's
+     TransmitBuffer = response[i];
+  }
+  writeEnable = 0;
   j=0;
 
   clearResponse();
@@ -170,10 +232,12 @@ void writeReg(void)
   response[6] = crc >> 8;
   response[7] = crc;
 
-  for(i=0;i!=8;i++){
+  writeEnable = 1;
+  for(i=0;i!=9;i++){
    while(busyUsart);//Change this to Busy1USART for double USART PIC's
      TransmitBuffer = response[i];
   }
+  writeEnable = 0;
   clearResponse();
 }
 
@@ -248,10 +312,92 @@ void readCoil(void)
   response[k] = crc >> 8;
   response[k+1] = crc;
 
-  for(i=0;i!=(k+2);i++){
+  writeEnable = 1;
+  for(i=0;i!=(k+3);i++){
    while(busyUsart);//Change this to Busy1USART for double USART PIC's
      TransmitBuffer = response[i];
   }
+  writeEnable = 0;
+  clearResponse();
+}
+
+void readInputCoil(void)
+{
+/******************************************************************************/
+/* Reads a coil and then responds                                             */
+/******************************************************************************/
+  unsigned int rc_Address = 0;
+  unsigned int rc_numCoils = 0;
+  unsigned int crc = 0;
+
+  unsigned char howManyBytes = 0;
+  unsigned char remainder = 0;
+  unsigned char lsb = 0;
+  unsigned char i,j,k,l = 0;
+
+  //Combine address bytes
+  rc_Address = received[2];
+  rc_Address <<=8;
+  rc_Address |= received[3];
+
+  //Combine number of coils bytes
+  rc_numCoils = received[4];
+  rc_numCoils <<= 8;
+  rc_numCoils |= received[5];
+
+  response[0] = SlaveAddress;
+  response[1] = 0x02;
+
+  howManyBytes = rc_numCoils/8;
+  remainder = rc_numCoils % 8;
+
+  if(remainder){
+    howManyBytes += 1;
+  }
+  response[2] = howManyBytes;
+
+  l = rc_Address;
+  k = 3; //start at response 3
+
+  for(i=howManyBytes; i!=0; i--){
+		if(i>1){
+      for(j=0;j!=8;j++){
+				if(coils[l]){
+					lsb = 1;
+				}
+				else{
+          lsb = 0;
+				}
+				response[k] ^= (lsb << j);
+				l++;
+	    }
+			k++;
+	  }
+		else{
+			for(j=0;j!=remainder;j++){
+				if(coils[l]){
+					lsb = 1;
+				}
+				else{
+          lsb = 0;
+				}
+        response[k] ^= (lsb << j);
+				l++;
+			}
+			k++;
+		}
+  }
+  crc = generateCRC(k+2);
+
+  response[k] = crc >> 8;
+  response[k+1] = crc;
+
+  writeEnable = 1;
+  for(i=0;i!=(k+3);i++){
+   while(busyUsart);//Change this to Busy1USART for double USART PIC's
+     TransmitBuffer = response[i];
+  }
+  writeEnable = 0;
   clearResponse();
 }
 
@@ -294,7 +440,7 @@ void writeCoil(void)
   }
 
   response[0] = SlaveAddress;
-  response[1] = 0x05;
+  response[1] = 0x02;
   response[3] = wc_AddressLow; //2 bytes per reg
   response[2] = wc_AddressHigh;
 
@@ -307,19 +453,17 @@ void writeCoil(void)
   response[6] = crc >> 8;
   response[7] = crc;
 
-  for(i=0;i!=8;i++){
+  writeEnable = 1;
+  for(i=0;i!=9;i++){
    while(busyUsart);//Change this to Busy1USART for double USART PIC's
      TransmitBuffer = response[i];
   }
+  writeEnable = 0;
   clearResponse();
 }
 
 unsigned int generateCRC(unsigned char messageLength)
 {
-/******************************************************************************/
-/* Takes data in buffer and works out what it means..                         */
-/* eg which function code and whether data is right.                          */
-/******************************************************************************/
 unsigned int crc = 0xFFFF;
 unsigned int crcHigh = 0;
 unsigned int crcLow = 0;
@@ -343,4 +487,37 @@ crcLow = (crc & 0xFF00) >>8;
 crcHigh |= crcLow;
 crc = crcHigh;
 return crc;
+}
+
+unsigned char checkCRC(void)
+{
+  unsigned int crc = 0xFFFF;
+  unsigned int crcHigh = 0;
+  unsigned int crcLow = 0;
+  int i,j = 0;
+
+    for(i=0;i<messageLength-2;i++){
+      crc ^= received[i];
+      for(j=8; j!=0; j--){
+        if((crc & 0x0001) != 0){
+          crc >>= 1;
+          crc ^= 0xA001;
+        }
+        else{
+          crc >>= 1;
+        }
+      }
+    }
+  //bytes are wrong way round so doing a swap here..
+  crcHigh = (crc & 0x00FF);
+  crcLow = (crc & 0xFF00) >>8;
+  if((crcHigh == received[i])&&(crcLow == received[i+1]))
+  {
+    return 1;
+  }
+  else{
+    return 0;
+  }
+
+
 }
