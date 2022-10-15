@@ -478,12 +478,10 @@ void writeMultiCoil(void)
 {
   unsigned short addr;
   unsigned short ncoil;
-  // unsigned char ncoil;
   unsigned char nbyte;
   unsigned char err;
   unsigned char len;
   unsigned char i;
-  unsigned char *data;
   unsigned char ibyte;
   unsigned char ibit;
   unsigned int crc = 0;
@@ -544,12 +542,11 @@ void writeMultiCoil(void)
   else  // Received message success
   {
     // Set coil
-    data = &received[7];
     for (i = 0; i < ncoil; i++)
     {
       ibyte = i / 8;
       ibit = i % 8;
-      coils[addr + i] = (data[ibyte] >> ibit) & 0x01;
+      coils[addr + i] = (received[7 + ibyte] >> ibit) & 0x01;
     }
 
     // response data
@@ -563,20 +560,20 @@ void writeMultiCoil(void)
      * len_min = 8
      */
     response[0] = received[0];
-    received[1] = received[1];
-    received[2] = received[2];
-    received[3] = received[3];
-    received[4] = received[4];
-    received[5] = received[5];
+    response[1] = received[1];
+    response[2] = received[2];
+    response[3] = received[3];
+    response[4] = received[4];
+    response[5] = received[5];
     len = 8;
   }
 
   crc = generateCRC(len);
-  response(len - 2) = (unsigned char)(crc >> 8);
-  response(len - 1) = (unsigned char)crc;
+  response[len - 2] = (unsigned char)(crc >> 8);
+  response[len - 1] = (unsigned char)crc;
 
   writeEnable = 1;
-  for (i = 0; i != len; i++)
+  for (i = 0; i != (len + 1); i++)
   {
     while (busyUsart); // Change this to Busy1USART for double USART PIC's
     TransmitBuffer = response[i];
