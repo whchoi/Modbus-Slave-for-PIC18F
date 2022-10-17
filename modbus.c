@@ -546,7 +546,7 @@ void writeMultiCoil(void)
     {
       ibyte = i / 8;
       ibit = i % 8;
-      coils[addr + i] = (received[7 + ibyte] >> ibit) & 0x01;
+      coils[addr + i] = ((received[7 + ibyte] >> ibit) & 0x01)?0xff:0x00;
     }
 
     // response data
