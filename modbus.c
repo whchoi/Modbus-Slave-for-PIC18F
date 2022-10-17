@@ -20,6 +20,15 @@
 #include "modbus.h"
 #include <usart.h>
 #include "system.h"
+
+/******************************************************************************/
+/* Macro                                                                      */
+/******************************************************************************/
+#define MB_EXC_FUNC			  0x01
+#define MB_EXC_ADDR_RANGE	0x02
+#define MB_EXC_REG_QTY	  0x03
+#define MB_EXC_EXECUTE		0x04
+
 /******************************************************************************/
 /* Global variables                                                           */
 /******************************************************************************/
@@ -67,6 +76,9 @@ void decodeIt(void)
       }	  
       else if(received[1] == 0x06){
         writeReg();
+      }
+      else if(received[1] == 0x0F){
+        writeMultiCoil();
       }
       else{
         response[0] = 0; //error this does nothing though..
@@ -460,6 +472,113 @@ void writeCoil(void)
   }
   writeEnable = 0;
   clearResponse();
+}
+
+void writeMultiCoil(void)
+{
+  unsigned short addr;
+  unsigned short ncoil;
+  unsigned char nbyte;
+  unsigned char err;
+  unsigned char len;
+  unsigned char i;
+  unsigned char ibyte;
+  unsigned char ibit;
+  unsigned int crc = 0;
+
+  // get start address
+  addr = received[2];
+  addr = (addr << 8) | received[3];
+
+  // Get number of coil
+  ncoil = received[4];
+  ncoil = (ncoil << 8) | received[5];
+
+  nbyte = ncoil / 8;
+  if (ncoil % 8)
+  {
+    nbyte += 1;
+  }
+
+  /**
+   * +----+----+------+-----+-----+------+-----+
+   * | ID | FC | ADDR | QTY | CNT | DATA | CRC |
+   * +----+----+------+-----+-----+------+-----+
+   * | 1  | 1  |   2  |  2  |  1  |   N  |  2  |
+   * +----+----+------+-----+-----+------+-----+
+   * len_min = 10
+   */
+  err = 0;
+  if ((ncoil < 1) || (ncoil >= sizeof(coils)) || (nbyte != received[6]))
+  {
+    err = MB_EXC_REG_QTY;
+  }
+  else if (addr >= sizeof(coils) || (addr + ncoil) >= sizeof(coils))
+  {
+    err = MB_EXC_ADDR_RANGE;
+  }
+  else if ((messageLength < 10) || ((nbyte + 9) != messageLength))
+  {
+    err = MB_EXC_EXECUTE;
+  }
+
+  response[0] = SlaveAddress;
+  if (err)  // Receive message error
+  {
+    // build exc
+    /**
+     * Response
+     * +----+----+----------+-----+
+     * | ID | FC | EXC_CODE | CRC |
+     * +----+----+----------+-----+
+     * | 1  | 1  |   1      |  2  |
+     * +----+----+----------+-----+
+     * len = 5
+     */
+    response[1] = 0x0F + 0x80;
+    response[2] = err;
+    len = 5;
+  }
+  else  // Received message success
+  {
+    // Set coil
+    for (i = 0; i < ncoil; i++)
+    {
+      ibyte = i / 8;
+      ibit = i % 8;
+      coils[addr + i] = ((received[7 + ibyte] >> ibit) & 0x01)?0xff:0x00;
+    }
+
+    // response data
+    /**
+     * Response
+     * +----+----+------+-----+-----+
+     * | ID | FC | ADDR | QTY | CRC |
+     * +----+----+------+-----+-----+
+     * | 1  | 1  |   2  |  2  |  2  |
+     * +----+----+------+-----+-----+
+     * len_min = 8
+     */
+    response[0] = received[0];
+    response[1] = received[1];
+    response[2] = received[2];
+    response[3] = received[3];
+    response[4] = received[4];
+    response[5] = received[5];
+    len = 8;
+  }
+
+  crc = generateCRC(len);
+  response[len - 2] = (unsigned char)(crc >> 8);
+  response[len - 1] = (unsigned char)crc;
+
+  writeEnable = 1;
+  for (i = 0; i != (len + 1); i++)
+  {
+    while (busyUsart); // Change this to Busy1USART for double USART PIC's
+    TransmitBuffer = response[i];
+  }
+  writeEnable = 0;
 }
 
 unsigned int generateCRC(unsigned char messageLength)

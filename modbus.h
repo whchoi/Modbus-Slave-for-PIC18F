@@ -13,6 +13,7 @@ void writeReg(void);
 void readCoil(void);
 void readInputCoil(void);
 void writeCoil(void);
+void writeMultiCoil(void);
 void modbusDelay(void);              /* Writes to Timer0 for 1.04ms delay*/
 void decodeIt(void);
 unsigned int generateCRC(unsigned char);
